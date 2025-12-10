@@ -6,6 +6,7 @@ import "./YourToken.sol";
 
 contract Vendor is Ownable {
     event BuyTokens(address buyer, uint256 amountOfETH, uint256 amountOfTokens);
+    event SellTokens(address seller, uint256 amountOfTokens, uint256 amountOfETH);
 
     YourToken public yourToken;
     uint256 public constant tokensPerEth = 100;
@@ -36,5 +37,17 @@ contract Vendor is Ownable {
     }
 
     // ToDo: create a sellTokens(uint256 _amount) function:
-    // (留给 Checkpoint 3 再写)
+    function sellTokens(uint256 amount) public {
+        bool success = yourToken.transferFrom(msg.sender, address(this), amount);
+        require(success, "Failed to fransfer tokens from user to vendor");
+
+        uint256 amountOfETHToRedeem = amount / tokensPerEth;
+        uint256 venderEthBalance = address(this).balance;
+        require(venderEthBalance >= amountOfETHToRedeem, "Vendor has insufficient ETH");
+
+        (bool sent, ) = msg.sender.call{ value: amountOfETHToRedeem }("");
+        require(sent, "Failed to send Ether to user");
+
+        emit SellTokens(msg.sender, amount, amountOfETHToRedeem);
+    }
 }
