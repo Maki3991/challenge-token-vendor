@@ -15,7 +15,7 @@ contract Vendor is Ownable {
         yourToken = YourToken(tokenAddress);
     }
 
-    // 💰 买币函数
+    // 买币函数
     function buyTokens() public payable {
         uint256 amountToBuy = msg.value * tokensPerEth;
 
@@ -25,19 +25,20 @@ contract Vendor is Ownable {
 
         // 发送代币
         bool sent = yourToken.transfer(msg.sender, amountToBuy);
-        require(sent, "Failed to transfer token to user"); // 👈 关键修复
+        require(sent, "Failed to transfer token to user"); // 关键修复
 
         emit BuyTokens(msg.sender, msg.value, amountToBuy);
     }
 
-    // 🏧 提款函数 (Checkpoint 2 要求)
+    // 提款函数
     function withdraw() public onlyOwner {
         (bool sent, ) = msg.sender.call{ value: address(this).balance }("");
         require(sent, "Failed to send Ether");
     }
 
-    // ToDo: create a sellTokens(uint256 _amount) function:
+    // 卖回币函数
     function sellTokens(uint256 amount) public {
+        // check that the user has enough tokens to sell
         bool success = yourToken.transferFrom(msg.sender, address(this), amount);
         require(success, "Failed to fransfer tokens from user to vendor");
 
@@ -45,6 +46,7 @@ contract Vendor is Ownable {
         uint256 venderEthBalance = address(this).balance;
         require(venderEthBalance >= amountOfETHToRedeem, "Vendor has insufficient ETH");
 
+        // send ETH to the user
         (bool sent, ) = msg.sender.call{ value: amountOfETHToRedeem }("");
         require(sent, "Failed to send Ether to user");
 
